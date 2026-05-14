@@ -67,12 +67,8 @@ platforms:
       name: "微博"
     - id: "zhihu"
       name: "知乎"
-    - id: "huxiu"
-      name: "虎嗅"
     - id: "hackernews"
       name: "Hacker News"
-    - id: "xiaohongshu"
-      name: "小红书"
     - id: "wallstreetcn-quick"
       name: "华尔街见闻快讯"
 
