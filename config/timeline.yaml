@@ -341,13 +341,13 @@ presets:
       all_day:
         periods: ["afternoon_peek", "late_night"]
     week_map:
-      1: "everyday"
-      2: "everyday"
-      3: "everyday"
-      4: "everyday"
-      5: "everyday"
-      6: "everyday"
-      7: "everyday"
+      1: "all_day"
+      2: "all_day"
+      3: "all_day"
+      4: "all_day"
+      5: "all_day"
+      6: "all_day"
+      7: "all_day"
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -444,25 +444,34 @@ custom:
     everyday:
       periods: ["morning_news", "internet_news", "evening_summary"]
 
- week_map:
-      1: "all_day"                 # 周一
-      2: "all_day"                 # 周二
-      3: "all_day"                 # 周三
-      4: "all_day"                 # 周四
-      5: "all_day"                 # 周五
-      6: "all_day"                 # 周六
-      7: "all_day"                 # 周日
+  week_map:
+    1: "everyday"
+    2: "everyday"
+    3: "everyday"
+    4: "everyday"
+    5: "everyday"
+    6: "everyday"
+    7: "everyday"
 
-运行逻辑
-
-每2小时唤醒一次（UTC 00:33, 02:33, 04:33...）
-09:00-10:00 命中 → 用全量关键词推送当日汇总，只推一次
-10:00-21:00 命中 → 用 internet.txt 推送增量，有新增就推
-22:00-23:00 命中 → AI分析全天 + 推送汇总，只推一次
-其余时间 → 只采集不推送
-
-另外 internet.txt 关键词匹配不到热榜的问题还在——改完 crawler.yml 和 timeline.yaml 之后，还需要检查 internet.txt 里的关键词是否覆盖了中文热榜内容。你要不要把 internet.txt 贴给我看看？
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  # 冲突策略：时间段重叠时直接报错（推荐，避免配置错误）
+  # 冲突策略（一般不用改）
+  #
+  # 什么是「冲突」？
+  #   如果你的两个时间段有重叠（比如 A 是 08:00-12:00，B 是 10:00-14:00），
+  #   那么 10:00-12:00 这段时间就同时属于 A 和 B，产生了冲突。
+  #   此时程序需要知道：到底听谁的？
+  #
+  # 两种处理方式：
+  #
+  #   error_on_overlap（推荐）
+  #     直接报错，提醒你去修改配置。
+  #     适合大多数人 —— 时间段重叠通常是写错了，报错能及时发现。
+  #
+  #   last_wins
+  #     day_plans 的 periods 列表中，写在后面的优先。
+  #     比如 periods: ["A", "B"]，重叠时 B 生效。
+  #     适合场景：你想用一个大范围时间段打底，再用后面的小范围覆盖。
+  #
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  
+  overlap:
+    policy: "error_on_overlap"
