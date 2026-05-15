@@ -441,8 +441,8 @@ custom:
     # ─────────────────────────────────────────────────────────
     internet_biz:
       name: "互联网资讯"
-      start: "11:00"
-      end: "22:00"
+      start: "10:00"
+      end: "21:00"
       frequency_file: "internet.txt"   # 使用 config/custom/keyword/internet.txt
       push: true                       # 推送
       report_mode: "incremental"       # 增量模式：只推新增，零重复
