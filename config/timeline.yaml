@@ -394,100 +394,103 @@ presets:
 #     晚间汇总 19:00-21:00：推送 ✓ | 分析 ✓ | daily
 #     其余时间走默认配置（静默采集）
 
+修正方案 · crawler.yml + timeline.yaml
+
+你贴的两个文件内容一样，都是你当前云端的 crawler.yml。没关系，我已经有源代码了。
+
+对比结论很清楚：
+
+我写错的地方
+源代码：- cron: "33 * * * *" 一行，每小时跑一次
+我写的：8 个独立 cron，试图在 cron 层面控制频率 — 这是错误的
+
+正确实现你的需求
+
+你的需求：
+
+09:00 早间全领域推送（daily 模式，全量关键词）
+10:00-21:00 每2小时互联网资讯增量推送（incremental 模式，internet.txt）
+22:00 晚间AI汇总（daily 模式 + AI分析）
+
+crawler.yml 改法：
+恢复源代码，只改一个数字——用 */2 实现每2小时：
+
+on:
+  schedule:
+    - cron: "33 */2 * * *"
+  workflow_dispatch:
+
+timeline.yaml 改法：
+用 custom 模式，定义三个时段。关键点：once.push 控制每个时段推几次。
+
 custom:
   name: "自定义"
   description: "早间全领域 + 白天互联网资讯 + 晚间AI汇总"
 
-  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  # 默认配置
-  # 不在任何时间段内时的行为：只采集不推送，静默积累数据
-  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   default:
-    collect: true                  # 始终采集数据（为晚间汇总积累素材）
-    analyze: false                 # 默认不做 AI 分析（省 API）
-    ai_mode: "current"             # AI 分析模式（默认值，被时间段覆盖）
-    push: false                    # 默认不推送（避免非工作时间打扰）
-    report_mode: "current"         # 报告模式（默认值，被时间段覆盖）
+    collect: true
+    analyze: false
+    ai_mode: "current"
+    push: false
+    report_mode: "current"
     once:
-      analyze: true                # 每个时段只分析一次
-      push: true                   # 每个时段只推送一次
+      analyze: true
+      push: true
 
-  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  # 时间段定义
-  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   periods:
-
-    # ─────────────────────────────────────────────────────────
-    # 早间全领域推送（09:00-10:00）
-    # 使用主关键词文件，推送 AI模型/新能源/金融/政治/历史 全部领域
-    # 模式：当日汇总，一次性推送当天所有匹配新闻
-    # ─────────────────────────────────────────────────────────
     morning_news:
       name: "早间全领域"
       start: "09:00"
       end: "10:00"
-      # 不指定 frequency_file → 使用默认的 config/frequency_words.txt
-      push: true                   # 推送
-      report_mode: "daily"         # 当日汇总模式
+      push: true
+      report_mode: "daily"
       once:
-        analyze: false
-        push: true                 # 窗口内只推一次
+        push: true           # 只推一次
 
-    # ─────────────────────────────────────────────────────────
-    # 互联网资讯推送（11:00-22:00）
-    # 使用独立关键词文件 internet.txt
-    # 模式：增量推送，每次只推新增内容，不重复
-    # 配合 cron 每 2 小时触发一次
-    # ─────────────────────────────────────────────────────────
-    internet_biz:
+    internet_news:
       name: "互联网资讯"
       start: "10:00"
       end: "21:00"
-      frequency_file: "internet.txt"   # 使用 config/custom/keyword/internet.txt
-      push: true                       # 推送
-      report_mode: "incremental"       # 增量模式：只推新增，零重复
+      frequency_file: "internet.txt"
+      push: true
+      report_mode: "incremental"
       once:
-        analyze: false
-        push: false                    # 不限推送次数（每 2 小时推一次）
+        push: false          # 每次唤醒都可以推（有新增就推）
 
-    # ─────────────────────────────────────────────────────────
-    # 晚间 AI 汇总（22:00-23:00）
-    # 使用主关键词文件，汇总全天所有领域新闻
-    # AI 深度分析全天热点趋势、情感倾向、跨平台关联
-    # ─────────────────────────────────────────────────────────
     evening_summary:
       name: "晚间AI汇总"
       start: "22:00"
       end: "23:00"
-      # 不指定 frequency_file → 使用默认的 config/frequency_words.txt
-      analyze: true                # 启用 AI 分析
-      ai_mode: "daily"             # AI 分析全天内容
-      push: true                   # 推送
-      report_mode: "daily"         # 当日汇总模式
+      analyze: true
+      ai_mode: "daily"
+      push: true
+      report_mode: "daily"
       once:
-        analyze: true              # 只分析一次
-        push: true                 # 只推送一次
+        analyze: true
+        push: true           # 只推一次
 
-  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  # 日计划：把时间段组装成一天的安排
-  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   day_plans:
     everyday:
-      periods: ["morning_news", "internet_biz", "evening_summary"]
+      periods: ["morning_news", "internet_news", "evening_summary"]
 
-  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  # 周映射：每天用哪个日计划（1=周一 ... 7=周日）
-  # 目前每天都一样，如需工作日/周末差异化可拆分
-  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   week_map:
-    1: "everyday"                  # 周一
-    2: "everyday"                  # 周二
-    3: "everyday"                  # 周三
-    4: "everyday"                  # 周四
-    5: "everyday"                  # 周五
-    6: "everyday"                  # 周六
-    7: "everyday"                  # 周日
+    1: "everyday"
+    2: "everyday"
+    3: "everyday"
+    4: "everyday"
+    5: "everyday"
+    6: "everyday"
+    7: "everyday"
 
+运行逻辑
+
+每2小时唤醒一次（UTC 00:33, 02:33, 04:33...）
+09:00-10:00 命中 → 用全量关键词推送当日汇总，只推一次
+10:00-21:00 命中 → 用 internet.txt 推送增量，有新增就推
+22:00-23:00 命中 → AI分析全天 + 推送汇总，只推一次
+其余时间 → 只采集不推送
+
+另外 internet.txt 关键词匹配不到热榜的问题还在——改完 crawler.yml 和 timeline.yaml 之后，还需要检查 internet.txt 里的关键词是否覆盖了中文热榜内容。你要不要把 internet.txt 贴给我看看？
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # 冲突策略：时间段重叠时直接报错（推荐，避免配置错误）
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
