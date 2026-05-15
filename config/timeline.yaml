@@ -394,35 +394,6 @@ presets:
 #     晚间汇总 19:00-21:00：推送 ✓ | 分析 ✓ | daily
 #     其余时间走默认配置（静默采集）
 
-修正方案 · crawler.yml + timeline.yaml
-
-你贴的两个文件内容一样，都是你当前云端的 crawler.yml。没关系，我已经有源代码了。
-
-对比结论很清楚：
-
-我写错的地方
-源代码：- cron: "33 * * * *" 一行，每小时跑一次
-我写的：8 个独立 cron，试图在 cron 层面控制频率 — 这是错误的
-
-正确实现你的需求
-
-你的需求：
-
-09:00 早间全领域推送（daily 模式，全量关键词）
-10:00-21:00 每2小时互联网资讯增量推送（incremental 模式，internet.txt）
-22:00 晚间AI汇总（daily 模式 + AI分析）
-
-crawler.yml 改法：
-恢复源代码，只改一个数字——用 */2 实现每2小时：
-
-on:
-  schedule:
-    - cron: "33 */2 * * *"
-  workflow_dispatch:
-
-timeline.yaml 改法：
-用 custom 模式，定义三个时段。关键点：once.push 控制每个时段推几次。
-
 custom:
   name: "自定义"
   description: "早间全领域 + 白天互联网资讯 + 晚间AI汇总"
@@ -473,14 +444,14 @@ custom:
     everyday:
       periods: ["morning_news", "internet_news", "evening_summary"]
 
-  week_map:
-    1: "everyday"
-    2: "everyday"
-    3: "everyday"
-    4: "everyday"
-    5: "everyday"
-    6: "everyday"
-    7: "everyday"
+ week_map:
+      1: "all_day"                 # 周一
+      2: "all_day"                 # 周二
+      3: "all_day"                 # 周三
+      4: "all_day"                 # 周四
+      5: "all_day"                 # 周五
+      6: "all_day"                 # 周六
+      7: "all_day"                 # 周日
 
 运行逻辑
 
