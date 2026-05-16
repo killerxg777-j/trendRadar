@@ -411,7 +411,7 @@ custom:
   periods:
     morning_news:
       name: "早间全领域"
-      start: "09:00"
+      start: "08:00"
       end: "10:00"
       push: true
       report_mode: "daily"
@@ -430,7 +430,7 @@ custom:
 
     evening_summary:
       name: "晚间AI汇总"
-      start: "22:00"
+      start: "21:00"
       end: "23:00"
       analyze: true
       ai_mode: "daily"
