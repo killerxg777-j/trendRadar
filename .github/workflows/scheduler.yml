@@ -1,0 +1,31 @@
+name: Scheduler
+
+on:
+  schedule:
+    # 每2小时触发一次，覆盖北京时间 08:00-24:00
+    # UTC 00:05 = 北京 08:05
+    # UTC 02:05 = 北京 10:05
+    # UTC 04:05 = 北京 12:05
+    # UTC 06:05 = 北京 14:05
+    # UTC 08:05 = 北京 16:05
+    # UTC 10:05 = 北京 18:05
+    # UTC 12:05 = 北京 20:05
+    # UTC 14:05 = 北京 22:05
+    - cron: "5 0,2,4,6,8,10,12,14 * * *"
+
+  workflow_dispatch:  # 支持手动触发
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger crawler workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "🕐 Current UTC time: $(date -u '+%Y-%m-%d %H:%M:%S')"
+          echo "🕐 Beijing time: $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')"
+          echo "📡 Triggering Get Hot News workflow..."
+          gh workflow run crawler.yml --repo ${{ github.repository }} --ref master
+          echo "✅ Triggered successfully"
